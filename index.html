@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>JAV BURMA - Telegram Mini App</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Axios for API calls -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <style>
+        * {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            background: #0f0f0f;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .tg-dark {
+            background: #1a1a1a;
+            border-color: #2a2a2a;
+        }
+        
+        .tg-card {
+            background: #262626;
+            border: 1px solid #3a3a3a;
+            border-radius: 12px;
+        }
+        
+        .tg-btn {
+            background: linear-gradient(135deg, #0088cc 0%, #00a8e8 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .tg-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+        
+        .tg-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .chat-bubble {
+            margin: 8px 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .bubble-customer {
+            background: #0088cc;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .bubble-admin {
+            background: #3a3a3a;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        }
+        
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+        
+        .drawer-overlay.active {
+            display: block;
+        }
+        
+        .drawer-menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: #1a1a1a;
+            border-left: 1px solid #3a3a3a;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .drawer-menu.active {
+            right: 0;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .grid-card {
+            background: #262626;
+            border: 1px solid #3a3a3a;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .grid-card:hover {
+            background: #2a2a2a;
+            border-color: #0088cc;
+            transform: translateY(-2px);
+        }
+        
+        .grid-card img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .grid-card .name {
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0088cc 0%, #00a8e8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .tab-button {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #999;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active {
+            color: #0088cc;
+            border-bottom-color: #0088cc;
+        }
+        
+        .spreadsheet {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .spreadsheet th {
+            background: #2a2a2a;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #3a3a3a;
+            font-weight: 600;
+        }
+        
+        .spreadsheet td {
+            padding: 8px;
+            border: 1px solid #3a3a3a;
+        }
+        
+        .spreadsheet input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #fff;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .pagination button {
+            padding: 6px 12px;
+            background: #262626;
+            border: 1px solid #3a3a3a;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pagination button.active {
+            background: #0088cc;
+            border-color: #0088cc;
+        }
+        
+        .pagination button:hover {
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+<body class="tg-dark">
+    <div id="app" class="flex flex-col h-screen">
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-blue-600 to-cyan-500 p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="avatar">JB</div>
+                <div>
+                    <div class="font-bold text-lg">JAV BURMA</div>
+                    <div class="text-xs opacity-80">Ad Network Hub</div>
+                </div>
+            </div>
+            <button id="profileBtn" class="text-2xl">👤</button>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div id="mainContent" class="flex-1 overflow-y-auto p-4">
+            <!-- TAB SWITCHER -->
+            <div class="flex gap-4 mb-4 border-b border-gray-700">
+                <button class="tab-button active" onclick="switchTab('clients')">👤 Clients</button>
+                <button class="tab-button" onclick="switchTab('groups')">👥 Groups</button>
+            </div>
+
+            <!-- CLIENTS TAB -->
+            <div id="clientsTab" class="tab-content">
+                <div id="chatsList" class="space-y-2"></div>
+            </div>
+
+            <!-- GROUPS TAB -->
+            <div id="groupsTab" class="tab-content hidden">
+                <div id="groupsList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- CHAT WINDOW (Hidden by default) -->
+        <div id="chatWindow" class="hidden flex flex-col h-full bg-black absolute inset-0 z-50">
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-500 p-4 flex items-center justify-between">
+                <div id="chatHeader" class="font-bold"></div>
+                <button onclick="closeChatWindow()" class="text-xl">✕</button>
+            </div>
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+            <div class="p-4 border-t border-gray-700 flex gap-2">
+                <input id="messageInput" type="text" placeholder="Type message..." class="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700">
+                <button onclick="sendMessage()" class="tg-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE DRAWER -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+    <div id="drawerMenu" class="drawer-menu">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button onclick="closeDrawer()" class="text-2xl">✕</button>
+        </div>
+        
+        <div class="tg-card p-4 mb-6">
+            <div class="text-xs text-gray-400 mb-2">Total Revenue</div>
+            <div id="walletBalance" class="text-2xl font-bold">0 MMK</div>
+            <button onclick="showRevenueHistory()" class="tg-btn w-full mt-4">View History</button>
+        </div>
+
+        <button onclick="showAdminDashboard()" class="tg-btn w-full">📊 Open Admin Dashboard</button>
+    </div>
+
+    <!-- ADMIN DASHBOARD MODAL -->
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-content w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Admin Dashboard</h2>
+                <button onclick="closeAdminModal()" class="text-2xl">✕</button>
+            </div>
+
+            <!-- Password Gate -->
+            <div id="passwordGate" class="mb-6">
+                <input id="adminPassword" type="password" placeholder="Enter admin password" class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 mb-3">
+                <button onclick="verifyAdminPassword()" class="tg-btn w-full">Unlock Dashboard</button>
+            </div>
+
+            <!-- Dashboard Content (Hidden until password verified) -->
+            <div id="dashboardContent" class="hidden space-y-6">
+                <!-- Wallet Balance Card -->
+                <div class="tg-card p-6">
+                    <div class="text-sm text-gray-400 mb-2">Wallet Balance</div>
+                    <div id="dashboardBalance" class="text-4xl font-bold mb-4">0 MMK</div>
+                    <button onclick="showRevenueHistory()" class="tg-btn">View History</button>
+                </div>
+
+                <!-- Channels Grid -->
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Channel Management</h3>
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="showSpreadsheetModal()" class="tg-btn">📋 To Add Data</button>
+                    </div>
+                    
+                    <div class="pagination" id="gridPagination"></div>
+                    <div id="channelsGrid" class="grid-container"></div>
+                    <div class="pagination" id="gridPagination2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANNEL DETAIL MODAL -->
+    <div id="channelModal" class="modal-overlay" onclick="closeChannelModal()">
+        <div class="modal-content w-full max-w-2xl" onclick="event.stopPropagation()">
+            <div id="channelDetail"></div>
+        </div>
+    </div>
+
+    <!-- REVENUE HISTORY MODAL -->
+    <div id="historyModal" class="modal-overlay" onclick="closeHistoryModal()">
+        <div class="modal-content w-full max-w-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Revenue Audit History</h2>
+                <button onclick="closeHistoryModal()" class="text-2xl">✕</button>
+            </div>
+            <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- SPREADSHEET MODAL -->
+    <div id="spreadsheetModal" class="modal-overlay" onclick="closeSpreadsheetModal()">
+        <div class="modal-content w-full max-w-6xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Channel Data Editor</h2>
+                <button onclick="closeSpreadsheetModal()" class="text-2xl">✕</button>
+            </div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto mb-4">
+                <table class="spreadsheet" id="spreadsheetTable"></table>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveSpreadsheetData()" class="tg-btn">Save Changes</button>
+                <button onclick="closeSpreadsheetModal()" class="tg-btn bg-gray-600">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // Global State
+        let currentChatId = null;
+        let currentBotSource = null;
+        let currentTab = 'clients';
+        let adminVerified = false;
+        let channelsData = [];
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        const API_URL = 'https://admin-dashboard-three-wine-60.vercel.app'; // Change to your Vercel URL
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        async function init() {
+            loadChats();
+            loadWalletBalance();
+            document.getElementById('profileBtn').addEventListener('click', openDrawer);
+        }
+
+        // ============================================
+        // CHAT FUNCTIONS
+        // ============================================
+
+        async function loadChats() {
+            try {
+                const response = await axios.get(`${API_URL}/api/chats`);
+                const chats = response.data;
+
+                const clientsList = document.getElementById('chatsList');
+                const groupsList = document.getElementById('groupsList');
+                clientsList.innerHTML = '';
+                groupsList.innerHTML = '';
+
+                chats.forEach(chat => {
+                    const isGroup = chat.chat_id < 0;
+                    const container = isGroup ? groupsList : clientsList;
+
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'tg-card p-4 cursor-pointer hover:bg-gray-700 transition';
+                    chatItem.onclick = () => openChatWindow(chat.chat_id, chat.customer_name || chat.username, chat.bot_source);
+                    chatItem.innerHTML = `
+                        <div class="font-bold">${chat.customer_name || chat.username}</div>
+                        <div class="text-sm text-gray-400 truncate">${chat.last_message || 'No messages'}</div>
+                        <div class="text-xs text-gray-500 mt-1">${new Date(chat.updated_at).toLocaleString()}</div>
+                    `;
+                    container.appendChild(chatItem);
+                });
+            } catch (error) {
+                console.error('Error loading chats:', error);
+            }
+        }
+
+        async function openChatWindow(chatId, name, botSource) {
+            currentChatId = chatId;
+            currentBotSource = botSource;
+            document.getElementById('chatHeader').textContent = name;
+            document.getElementById('chatWindow').classList.remove('hidden');
+            await loadMessages();
+        }
+
+        function closeChatWindow() {
+            document.getElementById('chatWindow').classList.add('hidden');
+            currentChatId = null;
+        }
+
+        async function loadMessages() {
+            try {
+                const response = await axios.get(`${API_URL}/api/messages/${currentChatId}`);
+                const messages = response.data;
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
+
+                messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `chat-bubble ${msg.sender === 'admin' ? 'bubble-admin' : 'bubble-customer'}`;
+                    bubble.textContent = msg.message_text;
+                    container.appendChild(bubble);
+                });
+
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const messageText = input.value.trim();
+
+            if (!messageText) return;
+
+            try {
+                await axios.post(`${API_URL}/api/send-reply`, {
+                    chatId: currentChatId,
+                    messageText,
+                    botSource: currentBotSource
+                });
+
+                input.value = '';
+                await loadMessages();
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            }
+        }
+
+        // ============================================
+        // DRAWER FUNCTIONS
+        // ============================================
+
+        function openDrawer() {
+            document.getElementById('drawerOverlay').classList.add('active');
+            document.getElementById('drawerMenu').classList.add('active');
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.remove('active');
+            document.getElementById('drawerMenu').classList.remove('active');
+        }
+
+        // ============================================
+        // ADMIN DASHBOARD FUNCTIONS
+        // ============================================
+
+        function showAdminDashboard() {
+            adminVerified = false;
+            document.getElementById('passwordGate').classList.remove('hidden');
+            document.getElementById('dashboardContent').classList.add('hidden');
+            document.getElementById('adminModal').classList.add('active');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            closeDrawer();
+        }
+
+        function verifyAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'JB2026@ADMIN') {
+                adminVerified = true;
+                document.getElementById('passwordGate').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.remove('hidden');
+                loadChannels();
+                loadWalletBalance();
+            } else {
+                alert('Invalid password');
+            }
+        }
+
+        async function loadWalletBalance() {
+            try {
+                const response = await axios.get(`${API_URL}/api/wallet-balance`);
+                document.getElementById('walletBalance').textContent = response.data.totalBalance + ' MMK';
+                document.getElementById('dashboardBalance').textContent = response.data.totalBalance + ' MMK';
+            } catch (error) {
+                console.error('Error loading wallet balance:', error);
+            }
+        }
+
+        async function loadChannels() {
+            try {
+                const response = await axios.get(`${API_URL}/api/channels`);
+                channelsData = response.data;
+                renderChannelGrid();
+                renderPagination();
+            } catch (error) {
+                console.error('Error loading channels:', error);
+            }
+        }
+
+        function renderChannelGrid() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageChannels = channelsData.slice(start, end);
+
+            const grid = document.getElementById('channelsGrid');
+            grid.innerHTML = '';
+
+            pageChannels.forEach(channel => {
+                const initials = channel.channel_name.substring(0, 2).toUpperCase();
+                const card = document.createElement('div');
+                card.className = 'grid-card';
+                card.onclick = () => showChannelDetail(channel);
+
+                const img = document.createElement('img');
+                img.src = channel.logo_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%230088cc' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em'%3E${initials}%3C/text%3E%3C/svg%3E`;
+                img.onerror = function() {
+                    this.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%230088cc' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em'%3E${initials}%3C/text%3E%3C/svg%3E`;
+                };
+
+                card.appendChild(img);
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'name';
+                nameDiv.textContent = channel.channel_name;
+                card.appendChild(nameDiv);
+
+                grid.appendChild(card);
+            });
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(channelsData.length / itemsPerPage);
+            const pagination = document.getElementById('gridPagination');
+            const pagination2 = document.getElementById('gridPagination2');
+
+            pagination.innerHTML = '';
+            pagination2.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === currentPage ? 'active' : '';
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderChannelGrid();
+                    renderPagination();
+                };
+                pagination.appendChild(btn);
+                pagination2.appendChild(btn.cloneNode(true));
+                pagination2.lastChild.onclick = btn.onclick;
+            }
+        }
+
+        function showChannelDetail(channel) {
+            const detail = document.getElementById('channelDetail');
+            const initials = channel.channel_name.substring(0, 2).toUpperCase();
+
+            detail.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">${channel.channel_name}</h2>
+                    <button onclick="closeChannelModal()" class="text-2xl">✕</button>
+                </div>
+
+                <img src="${channel.logo_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%230088cc' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em'%3E${initials}%3C/text%3E%3C/svg%3E`}" class="w-full h-40 object-cover rounded-lg mb-4" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%230088cc%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 font-size=%2240%22 fill=%22white%22 text-anchor=%22middle%22 dy=%22.3em%22%3E${initials}%3C/text%3E%3C/svg%3E'">
+
+                <div class="space-y-4">
+                    <div class="tg-card p-4">
+                        <div class="text-sm text-gray-400">Ad 1</div>
+                        <div class="font-bold">${channel.ads1 || 'Not set'}</div>
+                        <div class="text-sm">Duration: ${channel.ads1_duration || '-'} | Posts: ${channel.ads1_posts || '-'} | Fees: ${channel.ads1_fees} MMK</div>
+                    </div>
+
+                    <div class="tg-card p-4">
+                        <div class="text-sm text-gray-400">Ad 2</div>
+                        <div class="font-bold">${channel.ads2 || 'Not set'}</div>
+                        <div class="text-sm">Duration: ${channel.ads2_duration || '-'} | Posts: ${channel.ads2_posts || '-'} | Fees: ${channel.ads2_fees} MMK</div>
+                    </div>
+
+                    <a href="${channel.telegram_link}" target="_blank" class="tg-btn w-full text-center block">View Channel</a>
+                </div>
+            `;
+
+            document.getElementById('channelModal').classList.add('active');
+        }
+
+        function closeChannelModal() {
+            document.getElementById('channelModal').classList.remove('active');
+        }
+
+        // ============================================
+        // REVENUE HISTORY FUNCTIONS
+        // ============================================
+
+        async function showRevenueHistory() {
+            try {
+                const response = await axios.get(`${API_URL}/api/revenue-history`);
+                const history = response.data;
+
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+
+                history.forEach(item => {
+                    const entry = document.createElement('div');
+                    entry.className = 'tg-card p-4';
+                    entry.innerHTML = `
+                        <div class="font-bold">${item.channel}</div>
+                        <div class="text-sm text-gray-400 mt-1">
+                            <div>Ad 1: ${item.ad1 || '-'} - ${item.ad1_fees} MMK</div>
+                            <div>Ad 2: ${item.ad2 || '-'} - ${item.ad2_fees} MMK</div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">${new Date(item.timestamp).toLocaleString()}</div>
+                    `;
+                    historyList.appendChild(entry);
+                });
+
+                document.getElementById('historyModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        // ============================================
+        // SPREADSHEET FUNCTIONS
+        // ============================================
+
+        function showSpreadsheetModal() {
+            renderSpreadsheet();
+            document.getElementById('spreadsheetModal').classList.add('active');
+        }
+
+        function closeSpreadsheetModal() {
+            document.getElementById('spreadsheetModal').classList.remove('active');
+        }
+
+        function renderSpreadsheet() {
+            const table = document.getElementById('spreadsheetTable');
+            table.innerHTML = '';
+
+            // Header
+            const headerRow = table.insertRow();
+            const headers = ['ID', 'Channel Name', 'Telegram Link', 'Logo URL', 'Ad 1', 'Ad 1 Fees', 'Ad 1 Duration', 'Ad 1 Posts', 'Ad 2', 'Ad 2 Fees', 'Ad 2 Duration', 'Ad 2 Posts', 'Payment Method', 'Media'];
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+
+            // Data rows
+            channelsData.forEach(channel => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${channel.id}</td>
+                    <td><input type="text" value="${channel.channel_name}" onchange="updateCellDatabase(${channel.id}, 'channel_name', this.value)"></td>
+                    <td><input type="text" value="${channel.telegram_link || ''}" onchange="updateCellDatabase(${channel.id}, 'telegram_link', this.value)"></td>
+                    <td><input type="text" value="${channel.logo_url || ''}" onchange="updateCellDatabase(${channel.id}, 'logo_url', this.value)"></td>
+                    <td><input type="text" value="${channel.ads1 || ''}" onchange="updateCellDatabase(${channel.id}, 'ads1', this.value)"></td>
+                    <td><input type="number" value="${channel.ads1_fees || 0}" onchange="updateCellDatabase(${channel.id}, 'ads1_fees', this.value)"></td>
+                    <td><input type="text" value="${channel.ads1_duration || ''}" onchange="updateCellDatabase(${channel.id}, 'ads1_duration', this.value)"></td>
+                    <td><input type="text" value="${channel.ads1_posts || ''}" onchange="updateCellDatabase(${channel.id}, 'ads1_posts', this.value)"></td>
+                    <td><input type="text" value="${channel.ads2 || ''}" onchange="updateCellDatabase(${channel.id}, 'ads2', this.value)"></td>
+                    <td><input type="number" value="${channel.ads2_fees || 0}" onchange="updateCellDatabase(${channel.id}, 'ads2_fees', this.value)"></td>
+                    <td><input type="text" value="${channel.ads2_duration || ''}" onchange="updateCellDatabase(${channel.id}, 'ads2_duration', this.value)"></td>
+                    <td><input type="text" value="${channel.ads2_posts || ''}" onchange="updateCellDatabase(${channel.id}, 'ads2_posts', this.value)"></td>
+                    <td><input type="text" value="${channel.payment_method || ''}" onchange="updateCellDatabase(${channel.id}, 'payment_method', this.value)"></td>
+                    <td><input type="file" onchange="uploadRowMediaAsset(${channel.id}, this.files[0])"></td>
+                `;
+            });
+        }
+
+        async function updateCellDatabase(id, field, value) {
+            try {
+                await axios.post(`${API_URL}/api/update-cell`, { id, field, value });
+                loadChannels();
+                loadWalletBalance();
+            } catch (error) {
+                console.error('Error updating cell:', error);
+            }
+        }
+
+        async function uploadRowMediaAsset(id, file) {
+            if (!file) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('id', id);
+
+                const response = await axios.post(`${API_URL}/api/upload-media`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                alert('Media uploaded successfully');
+                loadChannels();
+            } catch (error) {
+                console.error('Error uploading media:', error);
+                alert('Failed to upload media');
+            }
+        }
+
+        function saveSpreadsheetData() {
+            alert('All changes are saved automatically');
+            closeSpreadsheetModal();
+            loadChannels();
+        }
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            if (tab === 'clients') {
+                document.getElementById('clientsTab').classList.remove('hidden');
+            } else {
+                document.getElementById('groupsTab').classList.remove('hidden');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
