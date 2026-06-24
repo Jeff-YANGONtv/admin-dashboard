@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Login - JAV BURMA Dashboard">
+    <title>Admin Login - JAV BURMA</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        }
+        
+        .login-card {
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-field {
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            outline: none;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .error-msg {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        .success-msg {
+            color: #10b981;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .success-msg.show {
+            display: block;
+        }
+        
+        .loader {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #10b981;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .demo-badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="login-card bg-white w-full max-w-md p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-shield-alt text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
+            <p class="text-gray-500 text-sm">JAV BURMA Dashboard Access</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <!-- Username Field -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-user text-emerald-500 mr-2"></i>Username
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="input-field w-full px-4 py-3 outline-none" 
+                    placeholder="Enter your username" 
+                    required
+                    autocomplete="username"
+                >
+                <div id="username-error" class="error-msg"></div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-lock text-emerald-500 mr-2"></i>Password
+                </label>
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="input-field w-full px-4 py-3 outline-none pr-12" 
+                        placeholder="Enter your password" 
+                        required
+                        autocomplete="current-password"
+                    >
+                    <button 
+                        type="button" 
+                        onclick="togglePassword()" 
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Toggle password visibility"
+                    >
+                        <i id="eye-icon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div id="password-error" class="error-msg"></div>
+            </div>
+
+            <!-- Login Button -->
+            <button 
+                type="submit" 
+                id="login-btn" 
+                class="btn-login w-full text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+                <span id="btn-text">Sign In</span>
+            </button>
+        </form>
+
+        <!-- Message Display -->
+        <div id="login-message" class="mt-4"></div>
+
+        <!-- Demo Credentials -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <div class="demo-badge">
+                <i class="fas fa-info-circle mr-1"></i> Demo Credentials
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-xs font-mono text-gray-600 space-y-2">
+                <div>
+                    <span class="font-bold text-gray-900">Username:</span>
+                    <span class="ml-2 select-all">admin</span>
+                </div>
+                <div>
+                    <span class="font-bold text-gray-900">Password:</span>
+                    <span class="ml-2 select-all">admin123</span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-4 text-center">
+                Use these credentials to test the dashboard
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://unjnemhzwliwghukyzhf.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_PQFj9avS9t2ZDcly-jccmg_iqBjpslB';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ============================================
+        // TELEGRAM WEBAPP SDK INITIALIZATION
+        // ============================================
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            // Set theme
+            if (tg.colorScheme === 'dark') {
+                document.body.classList.add('dark');
+            }
+        }
+
+        // ============================================
+        // PAGE INITIALIZATION
+        // ============================================
+        window.addEventListener('load', async () => {
+            // Check if already logged in
+            const user = localStorage.getItem('admin_user');
+            if (user) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            // Initialize demo admin user in database
+            await initDemoAdmin();
+        });
+
+        // ============================================
+        // DEMO ADMIN INITIALIZATION
+        // ============================================
+        async function initDemoAdmin() {
+            try {
+                // Simple hash function (Base64 - not for production)
+                const hashPassword = (pwd) => btoa(pwd);
+                
+                // Check if demo admin exists
+                const { data, error } = await supabase
+                    .from('admin_users')
+                    .select('id')
+                    .eq('username', 'admin')
+                    .limit(1);
+                
+                if (!data || data.length === 0) {
+                    // Insert demo admin
+                    const { error: insertError } = await supabase
+                        .from('admin_users')
+                        .insert([{
+                            username: 'admin',
+                            password_hash: hashPassword('admin123'),
+                            email: 'admin@javburma.com'
+                        }]);
+                    
+                    if (!insertError) {
+                        // Initialize wallet for demo admin
+                        const { data: adminData } = await supabase
+                            .from('admin_users')
+                            .select('id')
+                            .eq('username', 'admin')
+                            .limit(1);
+                        
+                        if (adminData && adminData.length > 0) {
+                            await supabase
+                                .from('admin_wallet')
+                                .insert([{
+                                    admin_id: adminData[0].id,
+                                    total_balance_mmk: 0
+                                }]);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Demo admin setup:', error);
+            }
+        }
+
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
+        function togglePassword() {
+            const field = document.getElementById('password');
+            const icon = document.getElementById('eye-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // ============================================
+        // LOGIN HANDLER
+        // ============================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('btn-text');
+            const msgDiv = document.getElementById('login-message');
+            
+            // Clear previous messages
+            clearErrors();
+            msgDiv.innerHTML = '';
+            
+            // Validation
+            if (!username) {
+                showError('username-error', 'Username is required');
+                return;
+            }
+            
+            if (!password) {
+                showError('password-error', 'Password is required');
+                return;
+            }
+            
+            // Disable button and show loading state
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="loader"></span> Signing in...';
+            
+            try {
+                // Hash password (Base64 - not for production)
+                const hashPassword = (pwd) => btoa(pwd);
+                
+                // Query database
+                const { data, error } = await supabase
+                    .from('admin_users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('password_hash', hashPassword(password))
+                    .limit(1);
+                
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                if (!data || data.length === 0) {
+                    showError('login-message', 'Invalid username or password', 'error');
+                    btn.disabled = false;
+                    btnText.textContent = 'Sign In';
+                    return;
+                }
+                
+                // Successful login
+                const user = data[0];
+                
+                // Check if user is active
+                if (!user.is_active) {
+                    showError('login-message', 'Your account has been disabled', 'error');
+                    btn.disabled = false;
+                    btnText.textContent = 'Sign In';
+                    return;
+                }
+                
+                // Store user info in localStorage
+                localStorage.setItem('admin_user', JSON.stringify({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    loginTime: new Date().toISOString()
+                }));
+                
+                // Show success message
+                showError('login-message', '✓ Login successful! Redirecting...', 'success');
+                
+                // Update last_login timestamp
+                await supabase
+                    .from('admin_users')
+                    .update({ last_login: new Date().toISOString() })
+                    .eq('id', user.id);
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+                
+            } catch (err) {
+                console.error('Login error:', err);
+                showError('login-message', 'Error: ' + (err.message || 'Unknown error'), 'error');
+                btn.disabled = false;
+                btnText.textContent = 'Sign In';
+            }
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showError(elementId, message, type = 'error') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            element.textContent = message;
+            element.classList.remove('error-msg', 'success-msg');
+            
+            if (type === 'error') {
+                element.classList.add('error-msg', 'show');
+            } else if (type === 'success') {
+                element.classList.add('success-msg', 'show');
+            }
+        }
+
+        function clearErrors() {
+            document.getElementById('username-error').textContent = '';
+            document.getElementById('password-error').textContent = '';
+            document.getElementById('username-error').classList.remove('show');
+            document.getElementById('password-error').classList.remove('show');
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            // Enter key to submit
+            if (e.key === 'Enter' && !document.getElementById('login-btn').disabled) {
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
